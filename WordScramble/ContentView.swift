@@ -13,45 +13,70 @@ struct ContentView: View {
     @State private var rootWord = ""
     @State private var newWord = ""
     
+    @State private var score = 0
+    
     //Alerts
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
     @State private var alertTitle: String = ""
     
     var body: some View {
-
+        
         NavigationStack {
-            List {
-                Section {
-                    TextField("Enter your word", text: $newWord)
-                        .textInputAutocapitalization(.never)
-                        .onSubmit(addNewWord)
-                }
+            
+            VStack {
+                Text(rootWord)
+                    .font(.largeTitle).bold()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 40)
+                    .padding(.leading, 20)
+
+
                 
-                Section {
-                    ForEach(usedWords, id: \.self) { word in
-                        HStack {
-                            Image(systemName: "\(word.count).circle")
-                            Text(word)
+                List {
+        
+                    Section("Word history") {
+                        TextField("Enter your word", text: $newWord)
+                            .textInputAutocapitalization(.never)
+                            .onSubmit(addNewWord)
+                    }
+                    
+                    
+                    Section {
+                        ForEach(usedWords, id: \.self) { word in
+                            HStack {
+                                Image(systemName: "\(word.count).circle")
+                                Text(word)
+                            }
                         }
+                    }
+                    
+                }
+                .navigationTitle("WordScramble")
+                .navigationBarTitleDisplayMode(.inline)
+                .onAppear {
+                    startGame()
+                }
+                .alert(alertTitle, isPresented: $showAlert) {
+                    Button("OK") {}
+                } message: {
+                    Text(alertMessage)
+                }
+                .toolbar {
+                    Button("New Word") {
+                        startGame()
                     }
                 }
                 
+                Text("Current Score: \(score)")
+                    .font(.title3)
+                    .padding(.top, 20)
+                
             }
-            .navigationTitle(rootWord)
-            .onAppear {
-                startGame()
-            }
-            .alert(alertTitle, isPresented: $showAlert) {
-                Button("OK") {}
-            } message: {
-                Text(alertMessage)
-            }
-
+            .preferredColorScheme(.dark)
+            
+            
         }
-        .preferredColorScheme(.dark)
-        
-        
     }
     
     func errorMessage(errorTitle: String, errorMessage: String) {
@@ -113,6 +138,8 @@ struct ContentView: View {
                 
                 if let randomWord = wordArray.randomElement() {
                     rootWord = randomWord
+                    usedWords.removeAll()
+                    score = 0
                     return
                 }
             }
@@ -125,6 +152,16 @@ struct ContentView: View {
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard answer.count > 0 else {
+            return
+        }
+        
+        guard answer.count >= 3 else {
+            errorMessage(errorTitle: "Word too short", errorMessage: "Enter words longer than 3 characters")
+            return
+        }
+        
+        guard answer != rootWord else {
+            errorMessage(errorTitle: "Word identical to root word", errorMessage: "Enter a unique word")
             return
         }
         
@@ -142,6 +179,8 @@ struct ContentView: View {
             errorMessage(errorTitle: "Word not real", errorMessage: "Enter a real word")
             return
         }
+        
+        score += answer.count
     
         
         withAnimation {
