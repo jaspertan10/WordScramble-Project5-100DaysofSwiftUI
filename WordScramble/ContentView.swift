@@ -64,7 +64,9 @@ struct ContentView: View {
                 }
                 .toolbar {
                     Button("New Word") {
-                        startGame()
+                        withAnimation {
+                            startGame()
+                        }
                     }
                 }
                 
